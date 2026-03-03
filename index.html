@@ -1116,7 +1116,7 @@ function renderQuestion(q) {
   const textWrap = document.getElementById('textInputWrap');
   const ansInput = document.getElementById('answerInput');
 
-  if (q.type === 'multiple_choice' && q.options && q.options.length) {
+  if (q.options && q.options.length) {
     optGrid.style.display = 'flex';
     textWrap.style.display = 'none';
     optGrid.innerHTML = '';
