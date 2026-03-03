@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLC: Adult Beginner 1 Study Bot</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    :root {
+      --navy:      #1e3a5f;
+      --navy-mid:  #2d5282;
+      --blue:      #2563eb;
+      --blue-light:#dbeafe;
+      --amber:     #f59e0b;
+      --amber-bg:  #fffbeb;
+      --green:     #16a34a;
+      --green-bg:  #f0fdf4;
+      --red:       #dc2626;
+      --red-bg:    #fef2f2;
+      --bg:        #f1f5f9;
+      --card:      #ffffff;
+      --border:    rgba(0,0,0,0.08);
+      --shadow:    0 1px 3px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+      --text:      #0f172a;
+      --muted:     #64748b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .header-flag { font-size: 1.6rem; }
+    .header-title { color: #fff; }
+    .header-title h1 { font-size: 1rem; font-weight: 800; letter-spacing: -0.3px; }
+    .header-title p  { font-size: 0.7rem; opacity: 0.65; }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .score-badge {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 9999px; padding: 0.3rem 0.85rem;
+      color: #fff; font-size: 0.78rem; font-weight: 700;
+    }
+    .score-badge span { color: var(--amber); }
+    .logout-btn {
+      background: rgba(255,255,255,0.12); color: #fff;
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px;
+      padding: 0.35rem 0.9rem; font-size: 0.75rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s; text-decoration: none;
+      display: inline-block;
+    }
+    .logout-btn:hover { opacity: 0.75; }
+
+    /* ── Container ── */
+    .container { max-width: 820px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+    /* ── Topic selector ── */
+    .section-label {
+      font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.6rem;
+    }
+    .topic-grid {
+      display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1.5rem;
+    }
+    .topic-chip {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 9999px; padding: 0.35rem 0.85rem;
+      font-size: 0.78rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; transition: all 0.15s; user-select: none;
+    }
+    .topic-chip:hover { border-color: var(--blue); color: var(--blue); }
+    .topic-chip.active {
+      background: var(--navy); border-color: var(--navy);
+      color: #fff;
+    }
+
+    /* ── Question Card ── */
+    .question-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 1.25rem; padding: 1.75rem;
+      box-shadow: var(--shadow); margin-bottom: 1rem;
+    }
+    .q-meta {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 1.1rem; flex-wrap: wrap;
+    }
+    .q-type-badge {
+      background: var(--blue-light); color: var(--blue);
+      border-radius: 9999px; padding: 0.2rem 0.6rem;
+      font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .q-topic-badge {
+      background: var(--amber-bg); color: #92400e;
+      border-radius: 9999px; padding: 0.2rem 0.6rem;
+      font-size: 0.65rem; font-weight: 700;
+    }
+    .question-text {
+      font-size: 1.15rem; font-weight: 700; line-height: 1.4;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Multiple choice options */
+    .options-grid { display: flex; flex-direction: column; gap: 0.55rem; }
+    .option-btn {
+      background: #f8fafc; border: 1.5px solid var(--border);
+      border-radius: 0.75rem; padding: 0.75rem 1rem;
+      font-size: 0.9rem; font-weight: 500; color: var(--text);
+      cursor: pointer; text-align: left; transition: all 0.15s;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .option-btn:hover:not(:disabled) { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+    .option-btn.correct { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+    .option-btn.incorrect { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+    .option-btn.reveal { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+    .option-letter {
+      width: 1.5rem; height: 1.5rem; border-radius: 50%;
+      background: var(--border); display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 800; flex-shrink: 0;
+    }
+
+    /* Text input */
+    .answer-input-wrap { position: relative; }
+    .answer-input {
+      width: 100%; border: 1.5px solid var(--border);
+      border-radius: 0.75rem; padding: 0.75rem 1rem;
+      font-size: 1rem; font-family: inherit; outline: none;
+      transition: border-color 0.15s;
+    }
+    .answer-input:focus { border-color: var(--blue); }
+    .answer-input.correct { border-color: var(--green); background: var(--green-bg); }
+    .answer-input.incorrect { border-color: var(--red); background: var(--red-bg); }
+    .submit-btn {
+      margin-top: 0.75rem; width: 100%;
+      background: var(--navy); color: #fff;
+      border: none; border-radius: 0.75rem;
+      padding: 0.75rem; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .submit-btn:hover:not(:disabled) { opacity: 0.85; }
+    .submit-btn:disabled { opacity: 0.45; cursor: default; }
+
+    /* Feedback banner */
+    .feedback-banner {
+      border-radius: 0.85rem; padding: 1rem 1.15rem;
+      margin-top: 1rem; display: none;
+    }
+    .feedback-banner.correct { background: var(--green-bg); border: 1px solid rgba(22,163,74,0.2); }
+    .feedback-banner.incorrect { background: var(--red-bg); border: 1px solid rgba(220,38,38,0.2); }
+    .feedback-title {
+      font-size: 0.85rem; font-weight: 800; margin-bottom: 0.3rem;
+    }
+    .feedback-banner.correct .feedback-title { color: var(--green); }
+    .feedback-banner.incorrect .feedback-title { color: var(--red); }
+    .feedback-body { font-size: 0.82rem; color: var(--text); line-height: 1.5; }
+    .feedback-answer { font-weight: 700; color: var(--navy); }
+
+    /* Next button */
+    .next-btn {
+      margin-top: 0.85rem; width: 100%;
+      background: var(--blue); color: #fff;
+      border: none; border-radius: 0.75rem;
+      padding: 0.75rem; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s; display: none;
+    }
+    .next-btn:hover { opacity: 0.85; }
+
+    /* Loading state */
+    .loading-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 1.25rem; padding: 2.5rem;
+      box-shadow: var(--shadow); text-align: center;
+      display: none;
+    }
+    .spinner {
+      width: 2.5rem; height: 2.5rem; border-radius: 50%;
+      border: 3px solid var(--blue-light);
+      border-top-color: var(--blue);
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.88rem; color: var(--muted); font-weight: 500; }
+
+    /* Start card */
+    .start-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 1.25rem; padding: 2.5rem;
+      box-shadow: var(--shadow); text-align: center;
+    }
+    .start-emoji { font-size: 3rem; margin-bottom: 0.75rem; }
+    .start-card h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .start-card p { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.5; }
+    .start-btn {
+      background: var(--navy); color: #fff;
+      border: none; border-radius: 0.75rem;
+      padding: 0.8rem 2rem; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .start-btn:hover { opacity: 0.85; }
+
+    /* Error card */
+    .error-card {
+      background: var(--red-bg); border: 1px solid rgba(220,38,38,0.2);
+      border-radius: 1rem; padding: 1.25rem;
+      font-size: 0.85rem; color: var(--red);
+      display: none; margin-bottom: 1rem;
+    }
+
+    /* Streak */
+    .streak-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+    .streak-label { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+    .streak-pip {
+      width: 0.55rem; height: 0.55rem; border-radius: 50%;
+      background: #e2e8f0;
+    }
+    .streak-pip.active { background: var(--amber); }
+
+    @media (max-width: 500px) {
+      .question-text { font-size: 1rem; }
+      .header-title h1 { font-size: 0.88rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-flag">🇩🇪</div>
+    <div class="header-title">
+      <h1>GLC: Adult Beginner 1 Study Bot</h1>
+      <p>G1.1 · AI-powered German practice</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="score-badge">Score: <span id="scoreDisplay">0/0</span></div>
+    <a class="logout-btn" href="/login.html">Log out</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Topic Selector -->
+  <div class="section-label">Choose a topic to practice</div>
+  <div class="topic-grid" id="topicGrid"></div>
+
+  <!-- Streak -->
+  <div class="streak-bar" id="streakBar">
+    <span class="streak-label">Streak:</span>
+  </div>
+
+  <!-- Error -->
+  <div class="error-card" id="errorCard"></div>
+
+  <!-- Loading -->
+  <div class="loading-card" id="loadingCard">
+    <div class="spinner"></div>
+    <div class="loading-text">Generating your question…</div>
+  </div>
+
+  <!-- Start Card -->
+  <div class="start-card" id="startCard">
+    <div class="start-emoji">📚</div>
+    <h2>Bereit zum Üben?</h2>
+    <p>Select a topic above (or keep "All Topics" for a mixed review), then press the button below. Claude will generate a fresh German practice question just for you.</p>
+    <button class="start-btn" onclick="getQuestion()">Fangen wir an! →</button>
+  </div>
+
+  <!-- Question Card -->
+  <div class="question-card" id="questionCard" style="display:none">
+    <div class="q-meta">
+      <span class="q-type-badge" id="qTypeBadge"></span>
+      <span class="q-topic-badge" id="qTopicBadge"></span>
+    </div>
+    <div class="question-text" id="questionText"></div>
+
+    <!-- Multiple Choice -->
+    <div class="options-grid" id="optionsGrid" style="display:none"></div>
+
+    <!-- Text Input -->
+    <div id="textInputWrap" style="display:none">
+      <input class="answer-input" id="answerInput" placeholder="Type your answer here…" autocomplete="off" />
+      <button class="submit-btn" id="submitBtn" onclick="checkTextAnswer()">Check Answer</button>
+    </div>
+
+    <div class="feedback-banner" id="feedbackBanner">
+      <div class="feedback-title" id="feedbackTitle"></div>
+      <div class="feedback-body" id="feedbackBody"></div>
+    </div>
+
+    <button class="next-btn" id="nextBtn" onclick="getQuestion()">Next Question →</button>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// COURSE MATERIAL
+// ─────────────────────────────────────────────
+const TOPICS = [
+  { id: 'all',        emoji: '🌟', name: 'All Topics (Mixed)' },
+  { id: 'greetings',  emoji: '👋', name: 'Greetings & Phrases' },
+  { id: 'intros',     emoji: '👤', name: 'Introductions' },
+  { id: 'classroom',  emoji: '💬', name: 'Classroom Communication' },
+  { id: 'pronouns',   emoji: '👥', name: 'Pronouns & Verb Conjugation' },
+  { id: 'questions',  emoji: '❓', name: 'W-Questions' },
+  { id: 'numbers',    emoji: '🔢', name: 'Numbers 1–100' },
+  { id: 'articles',   emoji: '📖', name: 'Articles & Plurals' },
+  { id: 'negation',   emoji: '❌', name: 'Negation (kein/nicht)' },
+  { id: 'accusative', emoji: '⬡',  name: 'Accusative Case' },
+  { id: 'food',       emoji: '🍽️', name: 'Food, Drinks & Restaurant' },
+  { id: 'plans',      emoji: '📅', name: 'Making Plans' },
+];
+
+const MATERIAL = {
+  greetings: `
+GREETINGS & HOW ARE YOU (Wie geht es dir?):
+- Hallo = Hello
+- Guten Morgen = Good morning
+- Guten Tag = Good day / Hello (more formal)
+- Guten Abend = Good evening
+- Auf Wiedersehen = Goodbye (formal)
+- Tschüss = Bye (informal)
+
+HOW ARE YOU (responses):
+- Wie geht es dir? / Wie geht es Ihnen? = How are you? (informal / formal)
+- Mir geht es gut. = I'm fine.
+- Sehr gut, danke! = Very well, thank you!
+- Ganz okay. = Not bad / So-so.
+- Ich bin müde. = I'm tired.
+- Nicht so gut. = Not so good.
+- Ich habe Stress. = I'm stressed.
+- Und dir? / Und Ihnen? = And you? (informal / formal)
+- Danke, gut! = Thanks, fine!
+`,
+  intros: `
+INTRODUCTIONS (Kennenlernen):
+Names:
+- Ich heiße … = My name is … (lit. I am called)
+- Mein Name ist … = My name is …
+- Wie heißt du? = What's your name? (informal)
+- Wie heißen Sie? = What's your name? (formal)
+- Wer ist das? = Who is that?
+
+Origin:
+- Ich komme aus … = I come from …
+- Woher kommst du? = Where are you from? (informal)
+- Ich komme aus Deutschland / den USA / der Schweiz.
+
+Living:
+- Ich wohne in … = I live in …
+- Wo wohnst du? = Where do you live?
+
+Languages:
+- Ich spreche Deutsch / Englisch / Spanisch.
+- Welche Sprachen sprichst du? = Which languages do you speak?
+- Ich lerne Deutsch. = I'm learning German.
+
+Meeting someone:
+- Schön, dich kennenzulernen. = Nice to meet you.
+- Ebenso! = Likewise!
+
+German-speaking countries:
+- Deutschland (Germany) → Deutsch
+- Österreich (Austria) → Deutsch
+- Die Schweiz (Switzerland) → Deutsch, Französisch, Italienisch
+Note: Most country names have no article. Exception: die Schweiz (feminine)
+`,
+  classroom: `
+CLASSROOM COMMUNICATION (Kommunikation im Kurs):
+Asking about meaning:
+- Wie heißt das auf Deutsch? = What is that called in German?
+- Was heißt … auf Deutsch? = What does … mean in German?
+- Was ist das? = What is that?
+
+Spelling:
+- Kannst du das bitte buchstabieren? = Can you spell that please? (informal)
+- Können Sie das bitte buchstabieren? = Can you spell that please? (formal)
+- Wie schreibt man das? = How do you write/spell that?
+- Entschuldigung, kannst du das bitte buchstabieren? = Excuse me, can you spell that?
+
+Repeating:
+- Kannst du das bitte wiederholen? = Can you repeat that please? (informal)
+- Können Sie das bitte wiederholen? = Can you repeat that please? (formal)
+- Ich verstehe das nicht. = I don't understand that.
+
+Writing:
+- Kannst du das bitte an die Tafel schreiben? = Can you write that on the board?
+- Können Sie das bitte an die Tafel schreiben? = (formal)
+
+Responses:
+- Na klar, gerne. = Sure, gladly.
+- Ja, gerne. = Yes, gladly.
+- Keine Ahnung. = No idea.
+- Ich weiß es nicht. = I don't know.
+- Ich brauche bitte Hilfe. = I need help please.
+
+Classroom items (with articles):
+- die Tafel = the blackboard
+- der Stuhl = the chair
+- der Tisch = the table
+- das Buch = the book
+- die Tür = the door
+- das Handy = the cell phone
+- der Rucksack = the backpack
+- der Kugelschreiber = the ballpoint pen
+- der Füller = the fountain pen
+- die Schere = the scissors
+- der Textmarker = the highlighter
+- die Handtasche = the handbag
+- der Bildschirm = the screen
+- die Wasserflasche = the water bottle
+`,
+  pronouns: `
+PERSONAL PRONOUNS (Personalpronomen):
+ich = I
+du = you (informal singular)
+er = he
+sie = she
+es = it
+wir = we
+ihr = you (plural informal)
+sie = they
+Sie = you (formal, always capitalized)
+
+VERB CONJUGATION (present tense):
+Regular pattern endings: -e, -st, -t, -en, -t, -en
+
+wohnen (to live): ich wohne, du wohnst, er/sie/es wohnt, wir wohnen, ihr wohnt, sie/Sie wohnen
+lernen (to learn): ich lerne, du lernst, er lernt, wir lernen, ihr lernt, sie lernen
+kommen (to come): ich komme, du kommst, er kommt, wir kommen, ihr kommt, sie kommen
+hören (to hear/listen): ich höre, du hörst, er hört, wir hören, ihr hört, sie hören
+üben (to practice): ich übe, du übst, er übt, wir üben, ihr übt, sie üben
+trinken (to drink): ich trinke, du trinkst, er trinkt, wir trinken, ihr trinkt, sie trinken
+schreiben (to write): ich schreibe, du schreibst, er schreibt, wir schreiben, ihr schreibt, sie schreiben
+arbeiten (to work): ich arbeite, du arbeitest, er arbeitet, wir arbeiten, ihr arbeitet, sie arbeiten
+leben (to live/reside): ich lebe, du lebst, er lebt, wir leben, ihr lebt, sie leben
+spielen (to play): ich spiele, du spielst, er spielt, wir spielen, ihr spielt, sie spielen
+machen (to do/make): ich mache, du machst, er macht, wir machen, ihr macht, sie machen
+
+STEM-CHANGING VERBS (irregular):
+sprechen (to speak): ich spreche, du sprichst, er spricht, wir sprechen, ihr sprecht, sie sprechen
+lesen (to read): ich lese, du liest, er liest, wir lesen, ihr lest, sie lesen
+
+IRREGULAR VERBS:
+sein (to be): ich bin, du bist, er/sie/es ist, wir sind, ihr seid, sie/Sie sind
+haben (to have): ich habe, du hast, er/sie/es hat, wir haben, ihr habt, sie/Sie haben
+
+FORMAL FORM: "Sie" always takes the same conjugation as "sie" (they).
+Example: Sie wohnen in Berlin. (You [formal] live in Berlin.)
+`,
+  questions: `
+W-QUESTIONS (W-Fragen):
+Wer? = Who?
+Was? = What?
+Wo? = Where? (location, where you are)
+Woher? = Where from? (origin)
+Wann? = When?
+Wie? = How?
+Welche/r/s? = Which?
+Warum? = Why?
+
+KEY DISTINCTION:
+- "Wo" asks about location: Wo wohnst du? → Ich wohne in Leipzig. (Where do you live? → I live in Leipzig.)
+- "Woher" asks about origin: Woher kommst du? → Ich komme aus der Schweiz. (Where are you from? → I come from Switzerland.)
+
+YES/NO QUESTIONS (Satzfragen):
+Formed by putting the verb first:
+- Kommst du aus den USA? = Do you come from the USA?
+- Sprichst du Deutsch? = Do you speak German?
+- Wohnst du in Berlin? = Do you live in Berlin?
+- Heißt du Anna? = Is your name Anna?
+- Bist du müde? = Are you tired?
+
+PRACTICE QUESTIONS:
+- Wie heißt du? = What's your name?
+- Woher kommst du? = Where are you from?
+- Wo wohnst du? = Where do you live?
+- Welche Sprachen sprichst du? = Which languages do you speak?
+- Was lernst du? = What are you learning?
+- Wann kommst du? = When are you coming?
+- Wer ist das? = Who is that?
+`,
+  numbers: `
+NUMBERS (Die Zahlen):
+1 = eins          11 = elf           21 = einundzwanzig
+2 = zwei          12 = zwölf         22 = zweiundzwanzig
+3 = drei          13 = dreizehn      30 = dreißig
+4 = vier          14 = vierzehn      40 = vierzig
+5 = fünf          15 = fünfzehn      50 = fünfzig
+6 = sechs         16 = sechzehn      60 = sechzig
+7 = sieben        17 = siebzehn      70 = siebzig
+8 = acht          18 = achtzehn      80 = achtzig
+9 = neun          19 = neunzehn      90 = neunzig
+10 = zehn         20 = zwanzig       100 = hundert
+
+PATTERN for compound numbers (21-99):
+Units + und + Tens: 35 = fünfunddreißig (five-and-thirty)
+Examples: 23 = dreiundzwanzig, 47 = siebenundvierzig, 58 = achtundfünfzig, 99 = neunundneunzig
+
+Note: "eins" becomes "ein" in compounds: 21 = einundzwanzig (NOT einsundzwanzig)
+`,
+  articles: `
+DEFINITE ARTICLES (Bestimmte Artikel - "the"):
+Masculine: der (e.g. der Tisch, der Mann, der Stuhl, der Rucksack, der Kaffee)
+Feminine:  die (e.g. die Frau, die Tür, die Schere, die Flasche, die Schule)
+Neuter:    das (e.g. das Buch, das Kind, das Handy, das Wasser, das Brot)
+Plural:    die (e.g. die Bücher, die Männer, die Kinder)
+
+INDEFINITE ARTICLES (Unbestimmte Artikel - "a/an"):
+Masculine: ein (e.g. ein Tisch, ein Kaffee)
+Feminine:  eine (e.g. eine Frau, eine Flasche)
+Neuter:    ein (e.g. ein Buch, ein Kind)
+Plural:    — (no indefinite article in plural)
+
+PLURAL ENDINGS (there is no single rule — must be memorized!):
+Common patterns:
+-e:  der Tisch → die Tische / der Tag → die Tage
+-er: das Buch → die Bücher / das Kind → die Kinder
+-en: die Frau → die Frauen / die Tür → die Türen
+-n:  die Schule → die Schulen / die Frage → die Fragen
+-s:  das Auto → die Autos / das Handy → die Handys
+-(no ending): der Lehrer → die Lehrer
+With umlaut: der Apfel → die Äpfel / die Mutter → die Mütter
+
+GERMAN UMLAUTS: ä, ö, ü
+- ä sounds like "eh" (e.g. Äpfel)
+- ö: say "ê" then round your lips to an O shape (e.g. möchten)
+- ü: say "ee" then purse lips as if whistling (e.g. üben, fünf)
+`,
+  negation: `
+NEGATION (Verneinung):
+Two main negation words:
+
+1. KEIN / KEINE / KEIN (negates nouns):
+Used when the noun would normally have ein/eine/ein or no article.
+- Masculine: kein (Das ist kein Tisch. = That is not a table.)
+- Feminine: keine (Ich habe keine Zeit. = I have no time.)
+- Neuter: kein (Das ist kein Problem. = That's no problem.)
+- Plural: keine (Ich habe keine Bücher. = I have no books.)
+
+2. NICHT (negates verbs and adjectives):
+- Ich verstehe das nicht. = I don't understand that.
+- Das ist nicht gut. = That is not good.
+- Ich komme nicht aus Deutschland. = I'm not from Germany.
+- Er wohnt nicht in Berlin. = He doesn't live in Berlin.
+- Das schmeckt nicht. = That doesn't taste good.
+
+RULE SUMMARY:
+- Use KEIN to negate nouns (replaces ein/eine/ein, or where there is no article)
+- Use NICHT to negate verbs, adjectives, or proper nouns
+`,
+  accusative: `
+THE ACCUSATIVE CASE (Der Akkusativ):
+Used for the direct object — answers "wen?" (whom?) or "was?" (what?)
+The object receives the action of the verb.
+
+ARTICLE CHANGES in accusative (Einzahl/singular):
+Masculine: der → den,  ein → einen  ← ONLY masculine changes!
+Feminine:  die → die,  eine → eine  (no change)
+Neuter:    das → das,  ein → ein    (no change)
+
+MEMORY TIP: Only "der" changes → "den" and "ein" → "einen" (masculine only!)
+
+EXAMPLES:
+- Ich sehe den Mann. (I see the man.) [der Mann → den Mann]
+- Ich trinke einen Kaffee. (I drink a coffee.) [ein Kaffee → einen Kaffee]
+- Ich esse die Pizza. (I eat the pizza.) [die Pizza → die Pizza, no change]
+- Ich lese das Buch. (I read the book.) [das Buch → das Buch, no change]
+- Er nimmt einen Apfel. (He takes an apple.) [ein Apfel → einen Apfel]
+
+COMMON ACCUSATIVE VERBS:
+haben (to have), sehen (to see), mögen (to like), essen (to eat), trinken (to drink),
+kaufen (to buy), nehmen (to take), brauchen (to need), bestellen (to order),
+lieben (to love), kennen (to know), finden (to find)
+
+THE 4 CASES overview:
+- Nominativ: subject (wer/was?) → Der Mann kommt.
+- Akkusativ: direct object (wen/was?) → Ich sehe den Mann.
+- Dativ: indirect object (wem?) → Ich gebe dem Mann das Buch. [not yet fully covered]
+- Genitiv: possession (wessen?) → Das Buch des Mannes. [not yet covered]
+`,
+  food: `
+DRINKS (Getränke):
+der Kaffee = coffee
+der Tee = tea
+das Wasser = water
+der Saft = juice
+das Bier = beer
+der Wein = wine
+die Milch = milk
+die Hafermilch = oat milk
+die Limonade = lemonade
+der Kakao = hot chocolate / cocoa
+
+FOOD (Essen):
+das Brot = bread
+das Brötchen = bread roll
+der Käse = cheese
+der Apfel (pl. die Äpfel) = apple
+die Wurst = sausage
+der Salat = salad
+die Suppe = soup
+das Fleisch = meat
+das Gemüse = vegetables
+die Pizza = pizza
+der Kuchen = cake
+das Eis = ice cream
+
+AT THE CAFÉ / RESTAURANT:
+- Was möchten Sie bestellen? / Was nehmen Sie? = What would you like to order?
+- Ich möchte … bestellen. = I would like to order …
+- Ich nehme … = I'll take …
+- Die Speisekarte, bitte. = The menu, please.
+- Einmal Kaffee, bitte. = One coffee, please.
+- Das schmeckt gut! = That tastes good!
+- Die Rechnung, bitte. / Zahlen, bitte! = The bill, please.
+- Zusammen oder getrennt? = Together or separate?
+
+RESTAURANT DIALOGUE:
+- Hallo, wir möchten einen Tisch für 4 Personen. = Hello, we'd like a table for 4.
+- Haben Sie reserviert? = Do you have a reservation?
+- Ja, wir haben auf den Namen „Müller" reserviert. = Yes, we reserved under the name Müller.
+- Nein, wir haben nicht reserviert. = No, we don't have a reservation.
+- Möchten Sie drinnen oder draußen sitzen? = Would you like to sit inside or outside?
+- Drinnen, bitte. = Inside, please.
+
+WINTER / WEATHER phrases (from class):
+- Mir ist kalt. = I'm cold.
+- Ich bleibe zu Hause. = I stay at home.
+- Wir spielen im Schnee. = We play in the snow.
+- Wir bauen einen Schneemann. = We build a snowman.
+- Ich trage eine Mütze, einen Schal und Handschuhe. = I wear a hat, scarf, and gloves.
+- Ich trinke viel heißen Tee. = I drink a lot of hot tea.
+`,
+  plans: `
+MAKING PLANS (Sich verabreden):
+- Möchtest du …? = Would you like to …?
+- Hast du am [Montag] Zeit? = Do you have time on [Monday]?
+- Ja, gerne! = Yes, gladly!
+- Nein, leider nicht. = No, unfortunately not.
+- Wann? = When?
+- Wo treffen wir uns? = Where do we meet?
+- Wir treffen uns um … Uhr. = We meet at … o'clock.
+- Um wie viel Uhr? = At what time?
+
+DAYS OF THE WEEK:
+Montag (Monday), Dienstag (Tuesday), Mittwoch (Wednesday),
+Donnerstag (Thursday), Freitag (Friday), Samstag (Saturday), Sonntag (Sunday)
+
+W-QUESTIONS for making plans:
+- Wer? (Who), Was? (What), Wann? (When), Wo? (Where), Wie? (How)
+
+COMMON ACTIVITIES:
+- ins Kino gehen = to go to the cinema
+- essen gehen = to go eat
+- einen Kaffee trinken = to drink a coffee
+- spazieren gehen = to go for a walk
+- zusammen üben = to practice together
+`,
+};
+
+// Full material for "all topics"
+MATERIAL.all = Object.values(MATERIAL).join('\n\n');
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let selectedTopic = 'all';
+let score = { correct: 0, total: 0 };
+let streak = 0;
+let currentQuestion = null;
+let awaitingNext = false;
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init() {
+  // Render topic chips
+  const grid = document.getElementById('topicGrid');
+  TOPICS.forEach(t => {
+    const chip = document.createElement('button');
+    chip.className = 'topic-chip' + (t.id === 'all' ? ' active' : '');
+    chip.textContent = t.emoji + ' ' + t.name;
+    chip.onclick = () => selectTopic(t.id);
+    chip.dataset.id = t.id;
+    grid.appendChild(chip);
+  });
+
+  renderStreak();
+
+}
+
+function selectTopic(id) {
+  selectedTopic = id;
+  document.querySelectorAll('.topic-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.id === id);
+  });
+  // Auto-fetch a new question for the selected topic
+  const hasStarted = document.getElementById('questionCard').style.display !== 'none'
+                  || document.getElementById('loadingCard').style.display !== 'none';
+  if (hasStarted) getQuestion();
+}
+
+function renderStreak() {
+  const bar = document.getElementById('streakBar');
+  bar.innerHTML = '<span class="streak-label">Streak: ' + streak + ' 🔥</span>';
+  for (let i = 0; i < 5; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'streak-pip' + (i < streak % 5 ? ' active' : '');
+    bar.appendChild(pip);
+  }
+}
+
+function updateScore() {
+  document.getElementById('scoreDisplay').textContent = score.correct + '/' + score.total;
+}
+
+// ─────────────────────────────────────────────
+// QUESTION GENERATION
+// ─────────────────────────────────────────────
+async function getQuestion() {
+
+  // Hide all, show loading
+  document.getElementById('startCard').style.display = 'none';
+  document.getElementById('questionCard').style.display = 'none';
+  document.getElementById('loadingCard').style.display = 'block';
+  document.getElementById('errorCard').style.display = 'none';
+
+  const topicObj = TOPICS.find(t => t.id === selectedTopic);
+  const material = MATERIAL[selectedTopic] || MATERIAL.all;
+
+  const questionTypes = [
+    'vocabulary_translation',
+    'fill_in_the_blank',
+    'multiple_choice',
+    'grammar',
+    'sentence_translation',
+  ];
+  // Pick a random type for variety
+  const randomType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+  const prompt = `You are a friendly German language tutor for adult beginners (A1 level) at the German Language Center (GLC).
+
+Based ONLY on the following course material, generate ONE practice question of type: ${randomType}
+
+Course material:
+${material}
+
+Question type definitions:
+- vocabulary_translation: Ask the student to translate one word or short phrase (German→English or English→German)
+- fill_in_the_blank: Give a sentence with one word missing; student must supply the correct German word (verb conjugation, article, or vocabulary)
+- multiple_choice: Give a question with 4 options (a, b, c, d); only one is correct
+- grammar: Ask about a grammar rule (e.g. which article, which verb ending, nominative vs accusative)
+- sentence_translation: Ask the student to translate a full short sentence (English→German or German→English)
+
+Generate a question appropriate for absolute beginners. Keep sentences simple. Vary between German→English and English→German directions.
+
+Respond ONLY with valid JSON (no markdown, no extra text) in exactly this format:
+{
+  "type": "${randomType}",
+  "topicLabel": "short topic name (e.g. Verb Conjugation, Articles, Vocabulary)",
+  "question": "The question text",
+  "options": ["a) option1", "b) option2", "c) option3", "d) option4"],
+  "answer": "The correct answer (for MC: just the letter like 'b')",
+  "hint": "One short hint (optional, can be empty string)",
+  "explanation": "Brief explanation of why this answer is correct, with any relevant grammar tip"
+}
+
+For non-multiple-choice types, set "options" to an empty array [].
+For the "answer" field in fill_in_the_blank and sentence_translation, provide the expected answer in lowercase for easy comparison, but show proper capitalization in the explanation.`;
+
+  try {
+    const resp = await fetch('/api/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'API error ' + resp.status);
+    }
+
+    const data = await resp.json();
+    const raw = data.content[0].text.trim();
+
+    // Parse JSON — strip markdown code fences if present
+    const jsonStr = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim();
+    currentQuestion = JSON.parse(jsonStr);
+
+    renderQuestion(currentQuestion);
+  } catch (err) {
+    document.getElementById('loadingCard').style.display = 'none';
+    const ec = document.getElementById('errorCard');
+    ec.style.display = 'block';
+    ec.textContent = '⚠️ Error: ' + err.message + '. Check your API key and try again.';
+    document.getElementById('startCard').style.display = 'block';
+  }
+}
+
+// ─────────────────────────────────────────────
+// RENDER QUESTION
+// ─────────────────────────────────────────────
+function renderQuestion(q) {
+  document.getElementById('loadingCard').style.display = 'none';
+  const card = document.getElementById('questionCard');
+  card.style.display = 'block';
+
+  // badges
+  const typeLabels = {
+    vocabulary_translation: 'Vocabulary',
+    fill_in_the_blank: 'Fill in the Blank',
+    multiple_choice: 'Multiple Choice',
+    grammar: 'Grammar',
+    sentence_translation: 'Translation',
+  };
+  document.getElementById('qTypeBadge').textContent = typeLabels[q.type] || q.type;
+  document.getElementById('qTopicBadge').textContent = q.topicLabel || TOPICS.find(t => t.id === selectedTopic)?.name;
+
+  document.getElementById('questionText').textContent = q.question;
+
+  // Reset feedback / next
+  const fb = document.getElementById('feedbackBanner');
+  fb.style.display = 'none';
+  fb.className = 'feedback-banner';
+  document.getElementById('nextBtn').style.display = 'none';
+  awaitingNext = false;
+
+  // Show appropriate input
+  const optGrid = document.getElementById('optionsGrid');
+  const textWrap = document.getElementById('textInputWrap');
+  const ansInput = document.getElementById('answerInput');
+
+  if (q.type === 'multiple_choice' && q.options && q.options.length) {
+    optGrid.style.display = 'flex';
+    textWrap.style.display = 'none';
+    optGrid.innerHTML = '';
+    q.options.forEach((opt, i) => {
+      const letters = ['a','b','c','d'];
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${opt.replace(/^[a-d]\)\s*/i, '')}`;
+      btn.onclick = () => checkMCAnswer(letters[i], btn);
+      optGrid.appendChild(btn);
+    });
+  } else {
+    optGrid.style.display = 'none';
+    textWrap.style.display = 'block';
+    ansInput.value = '';
+    ansInput.className = 'answer-input';
+    ansInput.disabled = false;
+    document.getElementById('submitBtn').disabled = false;
+    ansInput.focus();
+    // Enter key is handled by the global listener below
+  }
+}
+
+// ─────────────────────────────────────────────
+// ANSWER CHECKING
+// ─────────────────────────────────────────────
+function checkMCAnswer(chosen, clickedBtn) {
+  if (awaitingNext) return;
+  awaitingNext = true;
+
+  const correct = currentQuestion.answer.toLowerCase().trim();
+  const isCorrect = chosen.toLowerCase() === correct;
+
+  // Color all options
+  document.querySelectorAll('.option-btn').forEach((btn, i) => {
+    const letters = ['a','b','c','d'];
+    btn.disabled = true;
+    if (letters[i] === correct) btn.classList.add(isCorrect && letters[i] === chosen ? 'correct' : 'reveal');
+    if (letters[i] === chosen && !isCorrect) btn.classList.add('incorrect');
+  });
+
+  showFeedback(isCorrect);
+}
+
+function checkTextAnswer() {
+  if (awaitingNext) return;
+  const input = document.getElementById('answerInput');
+  const userAnswer = input.value.trim().toLowerCase();
+  if (!userAnswer) return;
+
+  awaitingNext = true;
+  const correct = currentQuestion.answer.toLowerCase().trim();
+
+  // Flexible matching: ignore punctuation differences
+  const normalize = s => s.replace(/[.,!?]/g, '').replace(/\s+/g, ' ').trim();
+  const isCorrect = normalize(userAnswer) === normalize(correct);
+
+  input.className = 'answer-input ' + (isCorrect ? 'correct' : 'incorrect');
+  input.disabled = true;
+  document.getElementById('submitBtn').disabled = true;
+
+  showFeedback(isCorrect);
+}
+
+function showFeedback(isCorrect) {
+  // Update score
+  score.total++;
+  if (isCorrect) {
+    score.correct++;
+    streak++;
+  } else {
+    streak = 0;
+  }
+  updateScore();
+  renderStreak();
+
+  const fb = document.getElementById('feedbackBanner');
+  fb.style.display = 'block';
+  fb.className = 'feedback-banner ' + (isCorrect ? 'correct' : 'incorrect');
+  document.getElementById('feedbackTitle').textContent = isCorrect
+    ? '✓ Richtig! Well done!'
+    : '✗ Not quite.';
+
+  let bodyHTML = '';
+  if (!isCorrect) {
+    bodyHTML += `Correct answer: <span class="feedback-answer">${currentQuestion.answer}</span><br>`;
+  }
+  if (currentQuestion.explanation) {
+    bodyHTML += currentQuestion.explanation;
+  }
+  document.getElementById('feedbackBody').innerHTML = bodyHTML;
+
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+// ─────────────────────────────────────────────
+// KEYBOARD SHORTCUT: Enter on Next
+// ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  if (!awaitingNext) {
+    // Check answer if text input is visible and has a value
+    const input = document.getElementById('answerInput');
+    if (input && input.closest('#textInputWrap').style.display !== 'none' && input.value.trim()) {
+      checkTextAnswer();
+    }
+  } else {
+    // Move to next question
+    getQuestion();
+  }
+});
+
+// ─────────────────────────────────────────────
+// START
+// ─────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLC: Study Bot — Login</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5282 100%);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .card {
+      background: #fff; border-radius: 1.5rem;
+      padding: 2.5rem 2rem; max-width: 380px; width: 100%;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .flag { font-size: 3rem; margin-bottom: 0.75rem; }
+    h1 { font-size: 1.3rem; font-weight: 900; color: #1e3a5f; margin-bottom: 0.3rem; }
+    .subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 2rem; }
+    .error-msg {
+      background: #fef2f2; border: 1px solid rgba(220,38,38,0.2);
+      border-radius: 0.6rem; padding: 0.6rem 0.85rem;
+      font-size: 0.8rem; color: #dc2626; font-weight: 600;
+      margin-bottom: 1rem; display: none;
+    }
+    input[type="password"] {
+      width: 100%; border: 1.5px solid #e2e8f0;
+      border-radius: 0.75rem; padding: 0.75rem 1rem;
+      font-size: 1rem; font-family: inherit;
+      outline: none; transition: border-color 0.15s;
+      margin-bottom: 0.85rem; text-align: center;
+      letter-spacing: 0.1em;
+    }
+    input[type="password"]:focus { border-color: #2563eb; }
+    button {
+      width: 100%; background: #1e3a5f; color: #fff;
+      border: none; border-radius: 0.75rem;
+      padding: 0.8rem; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+    }
+    button:hover { opacity: 0.85; }
+    .footer { font-size: 0.72rem; color: #94a3b8; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="flag">🇩🇪</div>
+    <h1>GLC Study Bot</h1>
+    <p class="subtitle">Adult Beginner 1 · G1.1</p>
+
+    <div class="error-msg" id="errMsg">Incorrect password. Please try again.</div>
+
+    <form method="POST" action="/login">
+      <input type="password" name="password" placeholder="Enter class password" autofocus autocomplete="off" />
+      <button type="submit">Einloggen →</button>
+    </form>
+
+    <p class="footer">German Language Center · Powered by Claude AI</p>
+  </div>
+
+  <script>
+    if (new URLSearchParams(location.search).get('error')) {
+      document.getElementById('errMsg').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
