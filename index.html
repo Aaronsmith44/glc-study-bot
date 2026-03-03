@@ -175,6 +175,7 @@
     }
     .answer-input:focus { border-color: var(--blue); }
     .answer-input.correct { border-color: var(--green); background: var(--green-bg); }
+    .answer-input.partial { border-color: var(--amber); background: var(--amber-bg); }
     .answer-input.incorrect { border-color: var(--red); background: var(--red-bg); }
     .submit-btn {
       margin-top: 0.75rem; width: 100%;
@@ -192,11 +193,13 @@
       margin-top: 1rem; display: none;
     }
     .feedback-banner.correct { background: var(--green-bg); border: 1px solid rgba(22,163,74,0.2); }
+    .feedback-banner.partial { background: var(--amber-bg); border: 1px solid rgba(245,158,11,0.3); }
     .feedback-banner.incorrect { background: var(--red-bg); border: 1px solid rgba(220,38,38,0.2); }
     .feedback-title {
       font-size: 0.85rem; font-weight: 800; margin-bottom: 0.3rem;
     }
     .feedback-banner.correct .feedback-title { color: var(--green); }
+    .feedback-banner.partial .feedback-title { color: #92400e; }
     .feedback-banner.incorrect .feedback-title { color: var(--red); }
     .feedback-body { font-size: 0.82rem; color: var(--text); line-height: 1.5; }
     .feedback-answer { font-weight: 700; color: var(--navy); }
@@ -1153,7 +1156,7 @@ function checkMCAnswer(chosen, clickedBtn) {
     if (letters[i] === chosen && !isCorrect) btn.classList.add('incorrect');
   });
 
-  showFeedback(isCorrect);
+  showFeedback(isCorrect ? 'correct' : 'incorrect');
 }
 
 function checkTextAnswer() {
@@ -1164,22 +1167,56 @@ function checkTextAnswer() {
 
   awaitingNext = true;
   const correct = currentQuestion.answer.toLowerCase().trim();
-  const normalize = s => s.replace(/[.,!?]/g, '').replace(/\s+/g, ' ').trim();
-  const isCorrect = normalize(userAnswer) === normalize(correct);
 
-  input.className = 'answer-input ' + (isCorrect ? 'correct' : 'incorrect');
+  const normalize = s => {
+    let t = s.toLowerCase().trim();
+    // Allow umlaut alternatives (ue=ü, oe=ö, ae=ä, ss=ß)
+    t = t.replace(/ü/g, 'ue').replace(/ö/g, 'oe').replace(/ä/g, 'ae').replace(/ß/g, 'ss');
+    // Strip punctuation
+    t = t.replace(/[.,!?;:'"()\-]/g, '');
+    // Normalize whitespace
+    t = t.replace(/\s+/g, ' ').trim();
+    // Strip leading articles so "the chair" = "chair", "der Stuhl" = "Stuhl"
+    t = t.replace(/^(the|a|an|der|die|das|ein|eine|einen|einem|einer)\s+/, '');
+    return t;
+  };
+
+  const normUser = normalize(userAnswer);
+  const normCorrect = normalize(correct);
+
+  // Determine match level: correct / partial / incorrect
+  const getMatchLevel = (u, c) => {
+    if (u === c) return 'correct';
+    // Partial: for multi-word answers, if ≥50% of the correct words appear in the user's answer
+    const cWords = c.split(' ').filter(w => w.length >= 2);
+    const uWords = u.split(' ').filter(w => w.length >= 2);
+    if (cWords.length >= 2) {
+      const hits = uWords.filter(w => cWords.includes(w)).length;
+      if (hits >= 1 && hits / cWords.length >= 0.5) return 'partial';
+    }
+    return 'incorrect';
+  };
+
+  const result = getMatchLevel(normUser, normCorrect);
+
+  input.className = 'answer-input ' + result;
   input.disabled = true;
   document.getElementById('submitBtn').disabled = true;
 
-  showFeedback(isCorrect);
+  showFeedback(result);
 }
 
-function showFeedback(isCorrect) {
+function showFeedback(result) {
+  // result is 'correct', 'partial', or 'incorrect'
   score.total++;
-  if (isCorrect) {
+  if (result === 'correct') {
     score.correct++;
     streak++;
     if (quizMode) quizCorrect++;
+  } else if (result === 'partial') {
+    score.correct += 0.5;
+    streak++;
+    if (quizMode) quizCorrect += 0.5;
   } else {
     streak = 0;
   }
@@ -1193,13 +1230,17 @@ function showFeedback(isCorrect) {
 
   const fb = document.getElementById('feedbackBanner');
   fb.style.display = 'block';
-  fb.className = 'feedback-banner ' + (isCorrect ? 'correct' : 'incorrect');
-  document.getElementById('feedbackTitle').textContent = isCorrect
-    ? '✓ Richtig! Well done!'
-    : '✗ Not quite.';
+  fb.className = 'feedback-banner ' + result;
+
+  const titles = {
+    correct:   '✓ Richtig! Well done!',
+    partial:   '~ Almost! ½ point — see the full answer below.',
+    incorrect: '✗ Not quite.',
+  };
+  document.getElementById('feedbackTitle').textContent = titles[result];
 
   let bodyHTML = '';
-  if (!isCorrect) {
+  if (result !== 'correct') {
     bodyHTML += `Correct answer: <span class="feedback-answer">${currentQuestion.answer}</span><br>`;
   }
   if (currentQuestion.explanation) {
