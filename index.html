@@ -827,6 +827,10 @@ let streak = 0;
 let currentQuestion = null;
 let awaitingNext = false;
 
+// Recent questions (to avoid repeats)
+const recentQuestions = [];
+const MAX_RECENT = 8;
+
 // Quiz state
 let quizMode = false;
 let quizNum = 0;
@@ -1024,12 +1028,16 @@ async function getQuestion() {
   ];
   const randomType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
 
+  const avoidClause = recentQuestions.length
+    ? `\n\nIMPORTANT: Do NOT repeat any of these recently asked questions (vary vocabulary, structure, and direction):\n${recentQuestions.map((q,i) => `${i+1}. ${q}`).join('\n')}`
+    : '';
+
   const prompt = `You are a friendly German language tutor for adult beginners (A1 level) at the German Language Center (GLC).
 
 Based ONLY on the following course material, generate ONE practice question of type: ${randomType}
 
 Course material:
-${material}
+${material}${avoidClause}
 
 Question type definitions:
 - vocabulary_translation: Ask the student to translate one word or short phrase (German→English or English→German)
@@ -1074,6 +1082,10 @@ For the "answer" field in fill_in_the_blank and sentence_translation, provide th
     const raw = data.content[0].text.trim();
     const jsonStr = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim();
     currentQuestion = JSON.parse(jsonStr);
+
+    // Track to avoid repeating
+    recentQuestions.push(currentQuestion.question);
+    if (recentQuestions.length > MAX_RECENT) recentQuestions.shift();
 
     renderQuestion(currentQuestion);
   } catch (err) {
@@ -1187,12 +1199,12 @@ function checkTextAnswer() {
   // Determine match level: correct / partial / incorrect
   const getMatchLevel = (u, c) => {
     if (u === c) return 'correct';
-    // Partial: for multi-word answers, if ≥50% of the correct words appear in the user's answer
+    // Partial only for longer phrases (3+ words), so "Guten Abend" ≠ partial of "Guten Morgen"
     const cWords = c.split(' ').filter(w => w.length >= 2);
     const uWords = u.split(' ').filter(w => w.length >= 2);
-    if (cWords.length >= 2) {
+    if (cWords.length >= 3) {
       const hits = uWords.filter(w => cWords.includes(w)).length;
-      if (hits >= 1 && hits / cWords.length >= 0.5) return 'partial';
+      if (hits >= 2 && hits / cWords.length >= 0.5) return 'partial';
     }
     return 'incorrect';
   };
